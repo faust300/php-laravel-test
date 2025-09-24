@@ -25,8 +25,8 @@ Docker 기반으로 누구나 동일한 환경에서 바로 실행할 수 있도
 
 ```bash
 # 0) 레포 클론
-git clone <YOUR_REPO_URL>.git
-cd <YOUR_REPO_DIR>
+git clone https://github.com/faust300/php-laravel-test.git
+cd php-laravel-test
 
 # 1) .env 준비
 cp .env.example .env
