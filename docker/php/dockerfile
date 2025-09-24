@@ -1,0 +1,29 @@
+FROM php:8.2-fpm-alpine
+
+RUN apk add --no-cache \
+    bash git curl zip unzip tzdata \
+    icu-dev oniguruma-dev libzip-dev \
+    libpng-dev libjpeg-turbo-dev freetype-dev \
+    mysql-client \
+ && docker-php-ext-configure intl \
+ && docker-php-ext-install -j$(nproc) pdo_mysql intl mbstring zip bcmath opcache
+
+RUN apk add --no-cache $PHPIZE_DEPS \
+ && docker-php-ext-configure gd --with-freetype --with-jpeg \
+ && docker-php-ext-install gd \
+ && apk del $PHPIZE_DEPS
+
+ENV TZ=Asia/Seoul
+RUN cp /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+WORKDIR /var/www/html
+COPY ./php.ini /usr/local/etc/php/conf.d/custom.ini
+
+# 권한 정리
+RUN addgroup -g 1000 laravel && adduser -D -G laravel -u 1000 laravel
+USER laravel
+
+# fpm 시작 전 권한 보정
+USER root
+CMD ["sh","-lc","chown -R www-data:www-data storage bootstrap/cache || true && php-fpm"]
