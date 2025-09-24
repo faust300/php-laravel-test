@@ -8,14 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Post extends Model
 {
-    use HasFactory, SoftDeletes;
-
-    /**
-     * 대량 할당 허용 필드
-     */
-    protected $fillable = [
-        'title',
-        'content',
-        'author',
-    ];
+  use HasFactory, SoftDeletes;
+  protected $fillable = ['title','content','author','password'];
+  protected $hidden   = ['password']; // 응답에서 숨기기
 }

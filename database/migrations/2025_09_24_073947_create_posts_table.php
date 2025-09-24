@@ -9,10 +9,9 @@ return new class extends Migration {
     {
         Schema::create('posts', function (Blueprint $table) {
             $table->id();
-
-            // 작성자: 익명 기본값 (별도 users FK 없이 문자열로 관리)
             $table->string('author', 100)->default('익명');
-
+            $table->string('password');
+            
             // 필수 컬럼
             $table->string('title', 200);
             $table->text('content');
