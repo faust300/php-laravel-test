@@ -1,141 +1,174 @@
-# Board API (Laravel 10 + PHP 8.2 + MySQL 8, Docker)
+# Board API (Laravel 10 + PHP 8.2)
 
-간단한 **게시판 API** 사전과제용 레포입니다.  
-Docker 기반으로 누구나 동일한 환경에서 바로 실행할 수 있도록 구성했습니다.
-
----
-
-## ✅ 스택
-- **Laravel 10+**
-- **PHP 8.2 (FPM, Alpine)**
-- **Nginx (Alpine)**
-- **MySQL 8**
-- Docker / Docker Compose v2
+라라벨 사전과제용 게시판 API 입니다.  
+게시글(Post)과 댓글(Comment)에 대한 CRUD를 지원하며, 모든 수정/삭제는 비밀번호 검증을 거쳐야 합니다.  
+Docker 환경에서 실행 가능하며, Postman Collection을 통해 테스트할 수 있습니다.
 
 ---
 
-## 🔧 사전 준비물
-- Docker Desktop (또는 Docker Engine + Docker Compose v2)
-- Git
-- (선택) VS Code + 확장: *Docker, PHP Debug, Intelephense, Laravel Extra Intellisense*
+## 🚀 기술 스택
+- Laravel 10
+- PHP 8.2
+- MySQL 8
+- Eloquent ORM
+- Docker / Docker Compose
 
 ---
 
-## 🚀 빠른 실행 (Quick Start: Docker)
+## ⚙️ 설치 및 실행 방법
 
+### 1. 프로젝트 클론 & 환경 변수 설정
 ```bash
-# 0) 레포 클론
 git clone https://github.com/faust300/php-laravel-test.git
 cd php-laravel-test
 
-# 1) .env 준비
 cp .env.example .env
-
-# 2) 컨테이너 기동 (빌드 포함)
-docker compose up -d --build
-
-# 3) 의존성 설치
-docker compose exec app composer install
-
-# 4) 앱 키 생성
-docker compose exec app php artisan key:generate
-
-# 5) 스토리지 링크
-docker compose exec app php artisan storage:link
-
-# 6) 데이터베이스 마이그레이션
-docker compose exec app php artisan migrate
-# 시더까지 넣으려면
-# docker compose exec app php artisan migrate --seed
 ```
 
-- 웹 접속: **http://localhost:8080**
-- API 엔드포인트는 `routes/api.php`에서 확인 가능
-
----
-
-## 🧩 환경 변수 (.env) 주요 항목
-```env
-APP_NAME=Laravel
-APP_ENV=local
-APP_KEY=
-APP_DEBUG=true
-APP_URL=http://localhost:8080
-
-DB_CONNECTION=mysql
-DB_HOST=db
-DB_PORT=3306
-DB_DATABASE=board_api
-DB_USERNAME=board
-DB_PASSWORD=boardpass
-
-SESSION_DRIVER=file
-```
-
-> ⚠️ `.env`는 커밋하지 않고, `.env.example`를 제공합니다.
-
----
-
-## 📦 도커 구성 요약
-- **app**: PHP-FPM 8.2 + Composer  
-- **web**: Nginx, 8080 포트 노출  
-- **db**: MySQL 8 (board_api / board / boardpass)
-
----
-
-## 🛠️ 자주 쓰는 명령어
+### 2. 컨테이너 빌드 & 실행
 ```bash
-docker compose ps                # 컨테이너 상태 확인
-docker compose logs -f web       # 웹 서버 로그
-docker compose exec app php artisan route:list   # 라우트 확인
-docker compose exec db mysql -uboard -pboardpass board_api   # DB 접속
-docker compose down              # 종료
-docker compose down -v           # 종료 + 볼륨 삭제 (주의)
+docker compose up -d --build
+```
+
+### 3. 앱 키 생성
+```bash
+docker compose exec app php artisan key:generate
+```
+
+### 4. DB 마이그레이션 & 시더 실행
+```bash
+docker compose exec app php artisan migrate --seed
+```
+
+> 시더 실행 시, 더미 게시글과 댓글이 생성됩니다.  
+> 모든 시더 데이터의 비밀번호는 기본적으로 `1234` 입니다.
+
+---
+
+## 📚 API 엔드포인트
+
+### 🔹 Posts (게시글)
+- `GET    /api/posts?size={n}&page={m}` → 게시글 목록 (페이지네이션, size 기본 10, 최대 50)
+- `GET    /api/posts/{id}` → 게시글 상세 (댓글 포함)
+- `POST   /api/posts` → 게시글 작성 (**password 필수**)
+- `PATCH  /api/posts/{id}` → 게시글 수정 (**password 검증**)
+- `DELETE /api/posts/{id}` → 게시글 삭제 (**password 검증, soft delete**)
+
+### 🔹 Comments (댓글)
+- `GET    /api/posts/{post_id}/comments?size={n}&page={m}` → 댓글 목록 (페이지네이션)
+- `POST   /api/posts/{post_id}/comments` → 댓글 작성 (**password 필수**)
+- `PATCH  /api/comments/{id}` → 댓글 수정 (**password 검증**)
+- `DELETE /api/comments/{id}` → 댓글 삭제 (**password 검증, soft delete**)
+
+---
+
+## 📦 요청/응답 예시
+
+### 게시글 작성
+**Request**
+```http
+POST /api/posts
+Content-Type: application/json
+Accept: application/json
+
+{
+  "title": "첫 글",
+  "content": "라라벨 테스트 API",
+  "author": "익명",
+  "password": "1234"
+}
+```
+
+**Response**
+```json
+{
+  "success": true,
+  "message": "Post created successfully",
+  "data": {
+    "id": 1,
+    "author": "익명",
+    "title": "첫 글",
+    "content": "라라벨 테스트 API",
+    "created_at": "2025-09-24T08:08:11.000000Z",
+    "updated_at": "2025-09-24T08:08:11.000000Z",
+    "deleted_at": null
+  }
+}
+```
+
+### 게시글 상세 조회 (댓글 포함)
+```http
+GET /api/posts/1
+Accept: application/json
+```
+
+**Response (일부)**
+```json
+{
+  "success": true,
+  "message": "Post detail with comments fetched successfully",
+  "data": {
+    "id": 1,
+    "author": "익명",
+    "title": "첫 글",
+    "content": "라라벨 테스트 API",
+    "comments": [
+      {
+        "id": 10,
+        "post_id": 1,
+        "author": "익명",
+        "content": "첫 댓글!",
+        "created_at": "2025-09-24T09:00:00.000000Z"
+      }
+    ]
+  }
+}
 ```
 
 ---
 
-## 📂 프로젝트 구조 (요약)
-```
-.
-├─ app/                  # 앱 코드
-├─ database/             # migrations, seeders, factories
-├─ public/               # /public/index.php
-├─ routes/               # api.php, web.php
-├─ storage/
-├─ docker-compose.yml
-└─ docker/
-   ├─ php/
-   │  ├─ Dockerfile
-   │  └─ php.ini
-   └─ nginx/
-      └─ default.conf
-```
+## 📑 공통 응답 포맷
+```json
+성공:
+{
+  "success": true,
+  "message": "메시지",
+  "data": { ... }
+}
 
----
-
-## 🧯 트러블슈팅
-- **`no configuration file provided: not found`** → `docker-compose.yml`이 있는 폴더에서 명령 실행해야 합니다.  
-- **`Your Composer dependencies require a PHP version ">= 8.2.0"`** → Dockerfile을 `php:8.2-fpm-alpine` 이상으로 수정 후 재빌드.  
-- **`Base table or view not found: 'sessions'`** → `.env`에서 `SESSION_DRIVER=file`로 변경.  
-- **권한 문제(storage/bootstrap/cache)**  
-  ```bash
-  docker compose exec app sh -lc 'chmod -R ug+rw storage bootstrap/cache && chown -R www-data:www-data storage bootstrap/cache'
-  ```
-
----
-
-## 📝 커밋 가이드 (예시)
-```
-chore(init): setup Laravel 10 with Docker (PHP 8.2 / Nginx / MySQL)
-feat(db): add posts/comments migrations & models
-feat(api): post & comment CRUD with validation + pagination
-feat(resource): response wrapper + json resources
-docs(postman): add collection
-docs: update README (docker + quick start)
+실패:
+{
+  "success": false,
+  "message": "에러 메시지",
+  "code": 3001,
+  "errors": { ... }
+}
 ```
 
 ---
 
-## 📄 라이선스
-MIT (필요 시 변경)
+## 🧪 Postman Collection
+API 테스트용 Postman Collection 파일이 포함되어 있습니다.
+
+파일 위치:  
+`BoardAPI_Full.postman_collection.json`
+
+환경 변수:
+- `base_url` (기본값: `http://localhost:8080`)
+- `size` (기본 페이지 사이즈, 10)
+- `post_id`, `comment_id`
+
+---
+
+## ✅ 요구사항 충족 여부
+- [x] Laravel 10 이상, PHP 8.1+
+- [x] DB: MySQL
+- [x] Eloquent ORM 활용
+- [x] 마이그레이션/시더 작성
+- [x] Postman Collection 문서 작성
+- [x] 기능 요구사항(Post CRUD, 댓글 CRUD, 페이지네이션, 유효성 검사, 공통 JSON 응답) 충족
+
+---
+
+## 👤 Author
+이상흡
