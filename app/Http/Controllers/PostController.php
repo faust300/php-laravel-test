@@ -25,12 +25,12 @@ class PostController extends Controller
   // GET /api/posts/{id}
   public function show(int $id)
   {
-    try {
-      $post = Post::findOrFail($id); // 기본적으로 soft deleted 항목은 안 잡힘
-      return ApiResponse::success($post, "Post detail fetched successfully");
-    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-      return ApiResponse::error("Post not found", 2001, null, 404);
-    }
+    // 게시글 + 댓글 같이 불러오기 (댓글은 최신순으로 정렬)
+    $post = \App\Models\Post::with(['comments' => function ($q) {
+        $q->orderByDesc('created_at');
+    }])->findOrFail($id);
+
+    return \App\Helpers\ApiResponse::success($post, 'Post detail with comments fetched successfully');
   }
 
   // POST /api/posts

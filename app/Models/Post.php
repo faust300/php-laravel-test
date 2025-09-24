@@ -11,4 +11,10 @@ class Post extends Model
   use HasFactory, SoftDeletes;
   protected $fillable = ['title','content','author','password'];
   protected $hidden   = ['password']; // 응답에서 숨기기
+
+  // app/Models/Post.php
+  public function comments()
+  {
+    return $this->hasMany(\App\Models\Comment::class);
+  }
 }
